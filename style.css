@@ -6,6 +6,10 @@ html {
   box-sizing: inherit;
 }
 
+*:focus {
+    outline: 0;
+}
+
 body{
 	width: 1100px;
 	margin: auto;
@@ -93,6 +97,8 @@ body input,
 	height: 35px;
 	margin: 0 0 5px 0;
 	padding: 0 0 0 5px;
+	border-radius: 5px;
+	border: 1px solid #ccc;
 }
 
 .coil-size select,
@@ -104,6 +110,8 @@ body input,
 	margin: 0 0 5px 0;
 	background: white;
 	padding: 0 0 0 5px;
+	border-radius: 5px;
+	border: 1px solid #ccc;
 }
 
 .coil-dia select{
@@ -112,6 +120,7 @@ body input,
 	height: 35px;
 	margin: 0 0 5px 2%;
 	background: white;
+	border: 1px solid #ccc;
 }
 
 .coil-wire label{
@@ -128,6 +137,7 @@ body input,
 	height: 35px;
 	margin: 0 0 5px 0;
 	background: white;
+	border: 1px solid #ccc;
 }
 
 .mod-type select,
@@ -136,6 +146,8 @@ body input,
 	background: white;
 	height: 35px;
 	padding: 0 0 0 5px;
+	border-radius: 5px;
+	border: 1px solid #ccc;
 }
 
 .coil-info h2{

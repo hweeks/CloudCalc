@@ -1,16 +1,4 @@
 $(function() {
-	var modType = $("#mod-type-select");
-	var batteryType = $(".battery-type");
-	var modBatteryType = $(".mod-battery-type");
-	var coilGauge = $("#coil-size-select");
-	var coilTypeSelect = $("#coil-wire-select");
-	var numCoilWraps = $("#coil-wraps-num");
-	var numCoils = $("#coil-num");
-	var wrapDiam = $("#wrap-diameter");
-	var wrapDiamUnits = $("#diameter-units");
-	var batteryAmps = $("#battery-amps");
-	var chipModWatts = $("#chip-watts");
-
 	var inputArray ={
 		 modType : $("#mod-type-select"),
 		 batteryType : $(".battery-type"),
@@ -45,70 +33,36 @@ $(function() {
 		batNum : 1
 	};
 
-	var ohmOutput = $(".ohm-results span");
-	var minOhmOutput = $(".min-ohm-results span");
-	var wattOutput = $(".watt-results span");
-	var voltOutput = $(".volt-results span");
-	var ohmWarningOutput = $(".ohm-warning");
-
-	var finalArea, finalWireType, finalLength, finalOhms, finalWatts, finalMinOhms, finalVolts, finalDiam, batNum=1; 
-
 	//Almost classes, lol
 	var mechMod = new function () {
+		// This pulls in all set variables
 		this.setVariables = function(inputArray, outputArray, variablesArray){
 			this.inputs = inputArray;
 			this.outputs = outputArray;
 			this.variables = variablesArray;
 		}
 
+		// This adds the information about maximum potential for the batteries output
 		this.mechInfo = function(){
 			this.getWatts();
 			this.getMinOhms();
 			this.outputs.wattOutput.text("");
-			this.outputs.wattOutput.text(Math.round(this.variables.finalWatts * 100) / 100)+"&#x2126;";
+			this.outputs.wattOutput.text(Math.round(this.variables.finalWatts * 100) / 100);
 			this.outputs.minOhmOutput.text("");
-			this.outputs.minOhmOutput.text(Math.round(this.variables.finalMinOhms * 100) / 100)+"&#x2126;";
+			this.outputs.minOhmOutput.text(Math.round(this.variables.finalMinOhms * 100) / 100);
 		}
-		
+
+		// This calculates the wattage of the battery based around it's max Amps
+		// Output is in watts		
 		this.getWatts = function() {
 			this.variables.finalWatts = this.inputs.batteryAmps.val()*3.7*parseFloat(this.variables.batNum);
 		}
-
-		this.getLength = function() {
-			var coilWraps = parseFloat(this.inputs.coilGauge.val())+parseFloat(this.variables.finalDiam);
-			var coilLength = (coilWraps*Math.PI)*parseFloat(this.inputs.numCoilWraps.val());
-			this.finalLength = (((coilLength + 10)/1000));	
-		}
-
-		this.getArea = function() {
-			var radius = parseFloat(this.inputs.coilGauge.val() / 2);
-			this.variables.finalArea = (Math.PI*radius*radius);
-		}
-
-		this.getMinOhms = function() {
-			this.variables.finalMinOhms = (3.7*parseFloat(this.variables.batNum))/this.inputs.batteryAmps.val();
-		}
-
-		this.getOhms = function (){
-			var resistance = 1/((this.inputs.coilTypeSelect.val()*this.finalLength)/this.finalArea);
-			var resRecip = resistance* this.inputs.numCoils.val();
-			this.variables.finalOhms = eval(1/resRecip);
-			this.checkSafety();
-		}
-
-		this.checkSafety = function() {
-			if (this.variables.finalOhms < this.variables.finalMinOhms) {
-				this.outputs.ohmWarningOutput.text("");
-				this.outputs.ohmWarningOutput.text("You will cause the battery to vent if you do this, which is bad.");
-			}
-			if (this.variables.finalOhms > this.variables.finalMinOhms) {
-				this.outputs.ohmWarningOutput.text("");
-			}
-		}
-
+		
+		// This bit parses the wrap diameter input, allowing fractions, decimals, or integers.
+		// The output is in millimeters.
 		this.getFinalDiameter = function() {
 			if (this.inputs.wrapDiamUnits.val() === "mm") {
-				this.variables.finalDiam = wrapDiam.val();
+				this.variables.finalDiam = this.inputs.wrapDiam.val();
 			}
 			if (this.inputs.wrapDiamUnits.val() === "in") {
 				var inches = this.inputs.wrapDiam.val();
@@ -121,61 +75,104 @@ $(function() {
 				}
 			}
 		}
+		
+		// This accounts for the width of the wire around your wrapping diameter to calculate the legth.
+		// We then add 10mm to account for the wire connecting to the actual pole in your atomizer.
+		// The output is in meters.
+		this.getLength = function() {
+			this.getFinalDiameter();
+			var coilWraps = parseFloat(this.inputs.coilGauge.val())+parseFloat(this.variables.finalDiam);
+			var coilLength = (coilWraps*Math.PI)*parseFloat(this.inputs.numCoilWraps.val());
+			this.variables.finalLength = (((coilLength + 10)/1000));	
+		}
+	
+		// This gets the cross-sectional area of the wire only.
+		// The output is in mm.
+		this.getArea = function() {
+			var radius = parseFloat(this.inputs.coilGauge.val() / 2);
+			this.variables.finalArea = (Math.PI*radius*radius);
+		}
+		
+		// This calculates the minimum ohm that won't cause a battery to vent
+		// The output is in Ohms
+		this.getMinOhms = function() {
+			this.variables.finalMinOhms = (3.7*parseFloat(this.variables.batNum))/this.inputs.batteryAmps.val();
+		}
 
+		// This calculates the actual resistance of the wire. 
+		// Units for coilType are mm^2 / m
+		// As you add coils, resistance is calculated by 1/R = 1/R1 + 1/R2 + ...
+		// The output is in Ohms
+		this.getOhms = function (){
+			this.getArea();
+			this.getLength();
+			var resistance = 1/((this.inputs.coilTypeSelect.val()*this.variables.finalLength)/this.variables.finalArea);
+			var resRecip = resistance* this.inputs.numCoils.val();
+			this.variables.finalOhms = 1/resRecip;
+			this.checkSafety();
+		}
+
+		// This calulates the volts based on watts and ohms
+		// If the volts go over 4.2 it recalculates to stay within battery limits
+		// The output is in volts
 		this.getVolts = function() {
+			this.getOhms();
 			this.variables.finalVolts = Math.sqrt(this.inputs.batteryAmps.val()*this.variables.finalOhms);
 			if (this.variables.finalVolts > 4.2) {
-				this.variables.finalVolts = 4.2
 				this.variables.finalWatts = (4.2*4.2)/this.variables.finalOhms;
-				this.outputs.wattOutput.text(Math.round(this.variables.finalWatts * 100) / 100)+"&#x2126;";
+				this.outputs.wattOutput.text(Math.round(this.variables.finalWatts * 100) / 100);
+				this.wattRecalc();
 			}
+		}
+
+		// This calculates wattage based on volts and ohms
+		// The output is in watts
+		this.wattRecalc = function() {
+			this.variables.finalWatts = (this.variables.finalVolts*this.variables.finalVolts)/this.variables.finalOhms;
+		}
+
+		// This calculates the lowest Ohm coil that battery can take and errors out if that is violated
+		// There is no output
+		this.checkSafety = function() {
+			if (this.variables.finalOhms < this.variables.finalMinOhms) {
+				this.outputs.ohmWarningOutput.removeClass("hidden");
+			}
+			if (this.variables.finalOhms > this.variables.finalMinOhms) {
+				this.outputs.ohmWarningOutput.addClass("hidden");
+			}
+		}
+
+		// This forces calculation of the entire variable/class then sets values
+		// There is no output.
+		this.setValues = function() {
+			this.getVolts();
+			this.outputs.ohmOutput.text("");
+			this.outputs.voltOutput.text("");
+			this.outputs.wattOutput.text("");
+			this.outputs.ohmOutput.text(Math.round(this.variables.finalOhms * 100) / 100);
+			this.outputs.voltOutput.text(Math.round(this.variables.finalVolts * 100) / 100);
+			this.outputs.wattOutput.text(Math.round(this.variables.finalWatts * 100) / 100);
+			this.outputs.minOhmOutput.text(Math.round(this.variables.finalMinOhms * 100) / 100);
 		}
 	}
 
 	var chipMod = new function () {
+
+		// This sets the variables for this function. It's fed by the modType.val()
 		this.setVariables = function(inputArray, outputArray, variablesArray){
 			this.inputs = inputArray;
 			this.outputs = outputArray;
 			this.variables = variablesArray;
 		}
 		
+		// With a CHIP mod the Wattage is set by the user, so it's just a atraight copy over
 		this.getWatts = function() {
 			this.variables.finalWatts = this.inputs.chipModWatts.val();
 			this.outputs.wattOutput.text(this.variables.finalWatts);
 		}
-
-		this.getLength = function() {
-			var coilWraps = parseFloat(this.inputs.coilGauge.val())+parseFloat(this.variables.finalDiam);
-			var coilLength = (coilWraps*Math.PI)*parseFloat(this.inputs.numCoilWraps.val());
-			this.finalLength = (((coilLength + 10)/1000));	
-		}
-
-		this.getArea = function() {
-			var radius = parseFloat(this.inputs.coilGauge.val() / 2);
-			this.variables.finalArea = (Math.PI*radius*radius);
-		}
-
-		this.getMinOhms = function() {
-			this.variables.finalMinOhms = (3.7*parseFloat(this.variables.batNum))/this.inputs.batteryAmps.val();
-		}
-
-		this.getOhms = function() {
-			var resistance = 1/((this.inputs.coilTypeSelect.val()*this.finalLength)/this.finalArea);
-			var resRecip = resistance* this.inputs.numCoils.val();
-			this.variables.finalOhms = eval(1/resRecip);
-			this.checkSafety();
-		}
-
-		this.checkSafety = function() {
-			if (this.variables.finalOhms < this.variables.finalMinOhms) {
-				this.outputs.ohmWarningOutput.text("");
-				this.outputs.ohmWarningOutput.text("You will cause the battery to vent if you do this, which is bad.");
-			}
-			if (this.variables.finalOhms > this.variables.finalMinOhms) {
-				this.outputs.ohmWarningOutput.text("");
-			}
-		}
-
+		
+		// This bit parses the wrap diameter input, allowing fractions, decimals, or integers.
+		// The output is in millimeters.
 		this.getFinalDiameter = function() {
 			if (this.inputs.wrapDiamUnits.val() === "mm") {
 				this.variables.finalDiam = wrapDiam.val();
@@ -192,67 +189,93 @@ $(function() {
 			}
 		}
 
+		// This accounts for the width of the wire around your wrapping diameter to calculate the legth.
+		// We then add 10mm to account for the wire connecting to the actual pole in your atomizer.
+		// The output is in meters.
+		this.getLength = function() {
+			this.getFinalDiameter();
+			var coilWraps = parseFloat(this.inputs.coilGauge.val())+parseFloat(this.variables.finalDiam);
+			var coilLength = (coilWraps*Math.PI)*parseFloat(this.inputs.numCoilWraps.val());
+			this.variables.finalLength = (((coilLength + 10)/1000));	
+		}
+		
+		// This gets the cross-sectional area of the wire only.
+		// The output is in mm.
+		this.getArea = function() {
+			var radius = parseFloat(this.inputs.coilGauge.val() / 2);
+			this.variables.finalArea = (Math.PI*radius*radius);
+		}
+
+		// This calculates the actual resistance of the wire. 
+		// Units for coilType are mm^2 / m
+		// As you add coils, resistance is calculated by 1/R = 1/R1 + 1/R2 + ...
+		// The output is in Ohms
+		this.getOhms = function() {
+			this.getArea();
+			this.getLength();
+			var resistance = 1/((this.inputs.coilTypeSelect.val()*this.variables.finalLength)/this.variables.finalArea);
+			var resRecip = resistance* this.inputs.numCoils.val();
+			this.variables.finalOhms = 1/resRecip;
+		}		
+
+		// This calulates the volts based on watts and ohms
+		// The output is in volts
 		this.getVolts = function() {
-			this.variables.finalVolts = Math.sqrt(this.inputs.batteryAmps.val()*this.variables.finalOhms);
-			if (this.variables.finalVolts > 4.2) {
-				this.variables.finalVolts = 4.2
-				this.variables.finalWatts = (4.2*4.2)/this.variables.finalOhms;
-				this.outputs.wattOutput.text(Math.round(this.variables.finalWatts * 100) / 100)+"&#x2126;";
-			}
+			this.getOhms();
+			this.variables.finalVolts = Math.sqrt(this.variables.finalWatts *this.variables.finalOhms);
+		}
+
+		// This forces calculation of the entire variable/class then sets values
+		// There is no output.
+		this.setValues = function() {
+			this.getVolts();
+			this.outputs.ohmOutput.text("");
+			this.outputs.voltOutput.text("");
+			this.outputs.wattOutput.text("");
+			this.outputs.ohmWarningOutput.text("");
+			this.outputs.ohmOutput.text(Math.round(this.variables.finalOhms * 100) / 100);
+			this.outputs.voltOutput.text(Math.round(this.variables.finalVolts * 100) / 100);
+			this.outputs.wattOutput.text(Math.round(this.variables.finalWatts * 100) / 100);
+			this.outputs.minOhmOutput.text("Any");
 		}
 	}
 
-	modType.change( function(){
-		if (modType.val() === "m1" || modType.val() === "m2") {
-			batteryType.removeClass("hidden");
-			modBatteryType.addClass("hidden");
-			batNum = 1;
-			if (modType.val() === "m2") {
-				batNum = 2;
+	inputArray.modType.change( function(){
+		if (inputArray.modType.val() === "m1" || inputArray.modType.val() === "m2") {
+			inputArray.batteryType.removeClass("hidden");
+			inputArray.modBatteryType.addClass("hidden");
+			valueArray.batNum = 1;
+			if (inputArray.modType.val() === "m2") {
+				valueArray.batNum = 2;
 			}
-			if (batteryAmps.val() != null) {
-				setMechInfo();
-				checkSafety();
-			}
-			batteryType.removeClass("hidden");
-			ohmWarningOutput.removeClass("hidden");
-			finalVolts = 3.7;
+			inputArray.batteryType.removeClass("hidden");
+			valueArray.finalVolts = 3.7;
 			mechMod.setVariables(inputArray, outputArray, valueArray);
 		}
-		if (modType.val() === "chip") {
-			modBatteryType.removeClass("hidden");
-			batteryType.addClass("hidden");
-			batNum = 1;
-			ohmWarningOutput.addClass("hidden");
+		if (inputArray.modType.val() === "chip") {
+			inputArray.modBatteryType.removeClass("hidden");
+			inputArray.batteryType.addClass("hidden");
+			valueArray.batNum = 1;
 			chipMod.setVariables(inputArray, outputArray, valueArray);
 		}
 	});
 
-	chipModWatts.keyup(function(){
+	inputArray.batteryType.change(function() {
+		mechMod.mechInfo();
+	});
+
+	inputArray.chipModWatts.keyup(function(){
 		chipMod.getWatts();
-	});
-
-	coilGauge.change(function(){
-		getArea(coilGauge.val());
-	});
-
-	batteryAmps.change(function(){
-		//setMechInfo();
 	});
 	
 	$( "button" ).click(function(e) {
 		e.preventDefault();
-		mechMod.setVariables(inputArray, outputArray, valueArray);
-		chipMod.setVariables(inputArray, outputArray, valueArray);
-		mechMod.mechInfo();
-		
-		getFinalDiameter();
-		getLength(numCoilWraps.val(), coilGauge.val(), finalDiam);
-		getOhms(coilTypeSelect.val(), finalArea, finalLength, numCoils.val());
-		ohmOutput.text("");
-		ohmOutput.text(Math.round(finalOhms * 100) / 100)+"&#x2126;";
-		getVolts();
-		voltOutput.text("");
-		voltOutput.text(Math.round(finalVolts * 100) / 100)+"&#x2126;";
+		if (inputArray.modType.val() === "m1" || inputArray.modType.val() === "m2") {
+			mechMod.setValues();
+		}
+		if (inputArray.modType.val() === "chip") {
+			chipMod.setValues();
+		}
+
 	});
 });
