@@ -1,0 +1,163 @@
+<html>
+<head>
+	<title>CloudCalc</title>
+	<link rel="stylesheet" type="text/css" href="http://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css">
+	<link rel="stylesheet" type="text/css" href="style.css">
+	<link href='http://fonts.googleapis.com/css?family=Hind:400,600,300' rel='stylesheet' type='text/css'>
+	<script type="text/javascript" src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="calc.js"></script>
+</head>
+<body>
+	<div class="top-nav">
+		<div class="site-title">VapeCalc</div>
+		<div class="output-panel">
+			<div class="ohm-results">
+				<h2>Ohms</h2>
+				<span></span>
+			</div>
+			<div class="volt-results">
+				<h2>Volts</h2>
+				<span></span>
+			</div>
+			<div class="watt-results">
+				<h2>Watts</h2>
+				<span></span>
+			</div>
+			<div class="min-ohm-results">
+				<h2>Safe Ohms</h2>
+				<span></span>
+			</div>
+			<div class="ohm-warning"></div>
+		</div>
+	</div>
+	<div class="calc-body">
+		<form>
+			<div class="side-bar">
+				<div class="mod-type">
+					<h1>Select Your Mod Type</h1>
+						<select id="mod-type-select">
+							<option selected disabled>Mod Type</option>
+							<option value="m1">Mech - Single Battery</option>
+							<option value="m2">Mech - Double Battery</option>
+							<option value="chip">Chip - Varied Battery</option>
+						</select>
+					<div class="battery-type hidden">
+						<h2>Battery Type</h2>
+							<select id="battery-amps">
+								<option selected disabled>Battery</option>
+								<option value="10">AW IMR 18650 2000mah</option>
+								<option value="24">AW IMR 18650 1600mah</option>
+								<option value="16.5">AW IMR 18490 1100mah</option>
+								<option value="6">AW IMR 18350 700mah</option>
+								<option value="20">MNKE IMR 18650 1500mah</option>
+								<option value="10">Panasonic CGR18650CH IMR/hybrid 2250mAh</option>
+								<option value="10">Panasonic NCR18650PF INR/ICR/IMR Hybrid 2900mAh</option>
+								<option value="10">Panasonic NCR18650PD LiNiCoAl 2900mAh</option>
+								<option value="22">Orbtronic 18650 SX22 (hybrid) 2000mAh</option>
+								<option value="20">Sanyo UR18650EX 2000mAh</option>
+								<option value="10">Samsung INR 18650-22P 2200mAh</option>
+								<option value="22">Samsung INR 18650-20R 2000mah</option>
+								<option value="10">Sony IMR US18650v3 2250mAh</option>
+								<option value="30">Sony IMR US18650vct3 1600mAh</option>
+								<option value="30">Sony IMR US18650vtc4 2100 mAh</option>
+								<option value="16">EH IMR 18650 2000 mAh</option>
+								<option value="22">EH IMR 18650 1500 mAh</option>
+								<option value="8.8">EH IMR 18500 1100 mAh</option>
+								<option value="6.4">EH IMR 18350 800 mAh</option>
+								<option value="10">Effset IMR/hybrid 18650 2250mAh</option>
+								<option value="10">Effset IMR 18650 2000mAh</option>
+								<option value="30">Effset IMR 18650 1600mAh</option>
+								<option value="8.8">Effset IMR 18490 1100mah</option>
+								<option value="6.4">Effset IMR 18350 800mah</option>
+							</select>
+					</div>
+					<div class="mod-battery-type hidden">
+						<h2>Chip Mod Output</h2>
+						<input type="text" id="chip-watts" placeholder="Max wattage output">
+					</div>
+				</div>
+				<div class="coil-info">
+					<h2>Coil Information</h2>
+					<div class="coil-size">
+						<label>Gauge: </label>
+						<select id="coil-size-select">
+							<option selected disabled>Gauge</option>
+							<option value="7.348">1</option>
+							<option value="6.544">2</option>
+							<option value="5.827">3</option>
+							<option value="5.189">4</option>
+							<option value="4.621">5</option>
+							<option value="4.115">6</option>
+							<option value="3.665">7</option>
+							<option value="3.264">8</option>
+							<option value="2.906">9</option>
+							<option value="2.588">10</option>
+							<option value="2.305">11</option>
+							<option value="2.053">12</option>
+							<option value="1.828">13</option>
+							<option value="1.628">14</option>
+							<option value="1.450">15</option>
+							<option value="1.291">16</option>
+							<option value="1.150">17</option>
+							<option value="1.024">18</option>
+							<option value="0.912">10</option>
+							<option value="0.812">20</option>
+							<option value="0.723">21</option>
+							<option value="0.644">22</option>
+							<option value="0.573">23</option>
+							<option value="0.511">24</option>
+							<option value="0.455">25</option>
+							<option value="0.405">26</option>
+							<option value="0.361">27</option>
+							<option value="0.321">28</option>
+							<option value="0.286">29</option>
+							<option value="0.255">30</option>
+							<option value="0.227">31</option>
+							<option value="0.202">32</option>
+							<option value="0.180">33</option>
+							<option value="0.160">34</option>
+							<option value="0.143">35</option>
+							<option value="0.127">36</option>
+							<option value="0.113">37</option>
+							<option value="0.101">38</option>
+							<option value="0.0897">39</option>
+							<option value="0.0799">40</option>
+						</select>
+					</div>
+					<div class="coil-num">
+						<label>Coils: </label><input type="text" id="coil-num" placeholder="Number of coils">
+					</div>
+					<div class="coil-type">
+						<div class="coil-wraps">
+							<label>Wraps: </label><input type="text" id="coil-wraps-num" placeholder="Number of wraps">
+						</div>
+					</div>
+					<div class="coil-dia">
+						<label>Diameter: </label>
+						<input type="text" id="wrap-diameter" placeholder="Diameter of wrap">
+						<select id="diameter-units">
+							<option selected disabled>Units</option>
+							<option value="mm">mm</option>
+							<option value="in">in</option>
+						</select>
+					</div>
+					<div class="coil-wire">
+						<label>Type of Wire: </label>
+						<select id="coil-wire-select">
+							<option selected disabled>Type of Wire</option>
+							<option value="1.39">Kanthal</option>
+							<option value="1.11">Nichrome</option>
+							<option value="0.47">Titanium</option>
+							<option value="0.097">Nickel</option>
+						</select>
+					</div>
+				</div>
+				<button type="submit">Calculate</button>
+			</div>
+		</form>
+		<div class="main">
+
+		</div>
+	</div>
+</body>
+</html>
